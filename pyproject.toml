@@ -10,3 +10,14 @@ dependencies = [
     "pytest>=9.0.0",
     "uvicorn>=0.38.0",
 ]
+
+[tool.black]
+line-length = 79
+target-version = ['py312']
+
+[dependency-groups]
+dev = [
+    "docformatter>=1.7.8",
+    "isort>=8.0.1",
+]
+

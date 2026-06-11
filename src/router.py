@@ -1,38 +1,57 @@
-"""Module with routes"""
+"""Module with routes."""
 
-from typing import Annotated
+import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, HTTPException, Request
 
-from src.hmac_service import HMACSigner, hmac_service
-from src.models import SignRequest, VerifyRequest, VerifyResponse
+from src.codec import decode, encode
+from src.hmac_service import HMACSigner
+from src.models import SignRequest, SignResponse, VerifyRequest, VerifyResponse
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# TODO: напишите логику для ручки подписи
+def _get_signer(request: Request) -> HMACSigner:
+    return request.app.state.signer
+
+
 @router.post('/sign')
-async def sign(request: SignRequest, hmac_service: Annotated[HMACSigner, Depends(hmac_service)]) -> str:
-    """
-    Sign handler.
+async def sign(request: Request, body: SignRequest) -> SignResponse:
+    """Sign handler - creates HMAC signature for message."""
+    max_size = request.app.state.settings.max_msg_size_bytes
 
-    :param request: Request model.
-    :param hmac_service: HMAC service dependency.
-    :return: URL safe signature for message.
-    :raises HTTPException: If message invalid (empty or very big).
-    """
-    pass
+    if len(body.msg.encode('utf-8')) > max_size:
+        raise HTTPException(
+            status_code=413, detail='Message exceeds maximum size'
+        )
+
+    try:
+        signer = _get_signer(request)
+        signature_bytes = signer.sign(body.msg)
+        return SignResponse(signature=encode(signature_bytes))
+    except Exception as e:
+        logger.error('Error signing message: %s', str(e))
+        raise HTTPException(status_code=500, detail='internal')
 
 
-# TODO: напишите логику для ручки проверки подписи
 @router.post('/verify')
-async def verify(request: VerifyRequest, hmac_service: Annotated[HMACSigner, Depends(hmac_service)]) -> VerifyResponse:
-    """
-    Verify message with signature handler.
+async def verify(request: Request, body: VerifyRequest) -> VerifyResponse:
+    """Verify message with signature handler."""
+    max_size = request.app.state.settings.max_msg_size_bytes
 
-    :param request: Request model.
-    :param hmac_service: HMAC service dependency.
-    :return: VerifyResponse model.
-    :raises HTTPException: If invalid message or signature.
-    """
-    pass
+    if len(body.msg.encode('utf-8')) > max_size:
+        raise HTTPException(
+            status_code=413, detail='Message exceeds maximum size'
+        )
+
+    try:
+        signer = _get_signer(request)
+        signature_bytes = decode(body.signature)
+        is_valid = signer.verify(body.msg, signature_bytes)
+        return VerifyResponse(ok=is_valid)
+    except ValueError:
+        raise HTTPException(status_code=400, detail='invalid_signature_format')
+    except Exception as e:
+        logger.error('Error verifying signature: %s', str(e))
+        raise HTTPException(status_code=500, detail='internal')

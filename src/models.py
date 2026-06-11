@@ -1,21 +1,42 @@
 """Module with models"""
 
-from dataclasses import dataclass
+from typing import Annotated
 
-@dataclass(frozen=True)
-class SignRequest:
+from pydantic import BaseModel, Field, StringConstraints
+
+MsgField = Annotated[
+    str,
+    StringConstraints(min_length=1),
+    Field(description='Message to sign'),
+]
+
+SignatureField = Annotated[
+    str,
+    StringConstraints(min_length=1),
+    Field(description='Base64url-encoded signature'),
+]
+
+
+class SignRequest(BaseModel):
     """Model for /sign request"""
-    msg: str
+
+    msg: MsgField
 
 
-@dataclass(frozen=True)
-class VerifyRequest:
+class VerifyRequest(BaseModel):
     """Model for /verify request"""
-    msg: str
+
+    msg: MsgField
+    signature: SignatureField
+
+
+class SignResponse(BaseModel):
+    """Model for /sign response"""
+
     signature: str
 
 
-@dataclass(frozen=True)
-class VerifyResponse:
+class VerifyResponse(BaseModel):
     """Model for /verify response"""
+
     ok: bool
