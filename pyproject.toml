@@ -14,6 +14,7 @@ dependencies = [
 [tool.black]
 line-length = 79
 target-version = ['py312']
+skip-string-normalization = true
 
 [dependency-groups]
 dev = [

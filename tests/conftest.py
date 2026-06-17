@@ -7,12 +7,13 @@ from fastapi.testclient import TestClient
 from src.config import Settings
 from src.hmac_service import HMACSigner
 from src.router import router
+from tests.constants import TEST_SECRET
 
 
 @pytest.fixture
 def client() -> TestClient:
     """Create test client with fake secret key."""
-    settings = Settings(secret='dGVzdC1zZWNyZXQ=')
+    settings = Settings(secret=TEST_SECRET)
     signer = HMACSigner(settings.secret_bytes)
 
     app = FastAPI()

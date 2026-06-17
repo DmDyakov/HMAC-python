@@ -1,6 +1,7 @@
 """Module with routes."""
 
 import logging
+from http import HTTPStatus
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -23,7 +24,8 @@ async def sign(request: Request, body: SignRequest) -> SignResponse:
 
     if len(body.msg.encode('utf-8')) > max_size:
         raise HTTPException(
-            status_code=413, detail='Message exceeds maximum size'
+            status_code=HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+            detail='Message exceeds maximum size',
         )
 
     try:
@@ -32,7 +34,10 @@ async def sign(request: Request, body: SignRequest) -> SignResponse:
         return SignResponse(signature=encode(signature_bytes))
     except Exception as e:
         logger.error('Error signing message: %s', str(e))
-        raise HTTPException(status_code=500, detail='internal')
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail='internal',
+        )
 
 
 @router.post('/verify')
@@ -42,7 +47,8 @@ async def verify(request: Request, body: VerifyRequest) -> VerifyResponse:
 
     if len(body.msg.encode('utf-8')) > max_size:
         raise HTTPException(
-            status_code=413, detail='Message exceeds maximum size'
+            status_code=HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+            detail='Message exceeds maximum size',
         )
 
     try:
@@ -51,7 +57,13 @@ async def verify(request: Request, body: VerifyRequest) -> VerifyResponse:
         is_valid = signer.verify(body.msg, signature_bytes)
         return VerifyResponse(ok=is_valid)
     except ValueError:
-        raise HTTPException(status_code=400, detail='invalid_signature_format')
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='invalid_signature_format',
+        )
     except Exception as e:
         logger.error('Error verifying signature: %s', str(e))
-        raise HTTPException(status_code=500, detail='internal')
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail='internal',
+        )

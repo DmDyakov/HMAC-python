@@ -7,6 +7,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from src.constants import BASE64_BLOCK_SIZE, MAX_PORT, MIN_PORT
+
 
 class Settings(BaseModel):
     """App settings."""
@@ -31,9 +33,9 @@ class Settings(BaseModel):
 
     @property
     def secret_bytes(self) -> bytes:
-        padding = 4 - len(self.secret) % 4
+        padding = BASE64_BLOCK_SIZE - len(self.secret) % BASE64_BLOCK_SIZE
         secret_padded = self.secret
-        if padding != 4:
+        if padding != BASE64_BLOCK_SIZE:
             secret_padded += '=' * padding
         return base64.urlsafe_b64decode(secret_padded)
 
@@ -43,8 +45,8 @@ class Settings(BaseModel):
         if ':' not in v:
             raise ValueError('Listen must be in format "host:port"')
         _, port = v.split(':')
-        if not 0 < int(port) < 65536:
-            raise ValueError('Port must be between 1 and 65535')
+        if not MIN_PORT <= int(port) <= MAX_PORT:
+            raise ValueError(f'Port must be between {MIN_PORT} and {MAX_PORT}')
         return v
 
     @field_validator('secret')
@@ -53,8 +55,8 @@ class Settings(BaseModel):
         if not v:
             raise ValueError('Secret cannot be empty')
         try:
-            padding = 4 - len(v) % 4
-            v_padded = v + '=' * padding if padding != 4 else v
+            padding = BASE64_BLOCK_SIZE - len(v) % BASE64_BLOCK_SIZE
+            v_padded = v + '=' * padding if padding != BASE64_BLOCK_SIZE else v
             base64.urlsafe_b64decode(v_padded)
         except Exception:
             raise ValueError('Secret must be valid base64url')

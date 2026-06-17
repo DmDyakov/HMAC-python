@@ -1,4 +1,4 @@
-"""Module with models"""
+"""Module with models."""
 
 from typing import Annotated
 
@@ -18,25 +18,25 @@ SignatureField = Annotated[
 
 
 class SignRequest(BaseModel):
-    """Model for /sign request"""
+    """Model for /sign request."""
 
     msg: MsgField
 
 
 class VerifyRequest(BaseModel):
-    """Model for /verify request"""
+    """Model for /verify request."""
 
     msg: MsgField
     signature: SignatureField
 
 
 class SignResponse(BaseModel):
-    """Model for /sign response"""
+    """Model for /sign response."""
 
     signature: str
 
 
 class VerifyResponse(BaseModel):
-    """Model for /verify response"""
+    """Model for /verify response."""
 
     ok: bool

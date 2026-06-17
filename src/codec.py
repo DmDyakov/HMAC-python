@@ -2,6 +2,8 @@
 
 import base64
 
+from src.constants import BASE64_BLOCK_SIZE
+
 
 def encode(data: bytes) -> str:
     """Encode bytes to base64url string without padding."""
@@ -13,8 +15,11 @@ def decode(data: str) -> bytes:
     if not data:
         return b''
     try:
+        padding_length = (
+            BASE64_BLOCK_SIZE - len(data) % BASE64_BLOCK_SIZE
+        ) % BASE64_BLOCK_SIZE
         return base64.b64decode(
-            data + '=' * (4 - len(data) % 4),
+            data + '=' * padding_length,
             altchars=b'-_',
             validate=True,
         )

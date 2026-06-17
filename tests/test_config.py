@@ -7,15 +7,27 @@ import tempfile
 import pytest
 
 from src.config import Settings, get_settings
+from tests.constants import (
+    INVALID_LOG_LEVEL,
+    INVALID_SECRET,
+    NEW_MAX_MSG_SIZE,
+    TEST_HMAC_ALG,
+    TEST_HOST,
+    TEST_LISTEN,
+    TEST_LOG_LEVEL,
+    TEST_MAX_MSG_SIZE,
+    TEST_PORT,
+    TEST_SECRET,
+)
 
 
 def test_load_valid_config():
     config_data = {
-        'hmac_alg': 'SHA256',
-        'secret': 'dGVzdC1zZWNyZXQ=',
-        'log_level': 'info',
-        'listen': '127.0.0.1:8080',
-        'max_msg_size_bytes': 1048576,
+        'hmac_alg': TEST_HMAC_ALG,
+        'secret': TEST_SECRET,
+        'log_level': TEST_LOG_LEVEL,
+        'listen': TEST_LISTEN,
+        'max_msg_size_bytes': TEST_MAX_MSG_SIZE,
     }
 
     with tempfile.NamedTemporaryFile(
@@ -26,21 +38,21 @@ def test_load_valid_config():
 
     try:
         settings = get_settings(config_path)
-        assert settings.hmac_alg == 'SHA256'
-        assert settings.log_level == 'info'
-        assert settings.host == '127.0.0.1'
-        assert settings.port == 8080
-        assert settings.max_msg_size_bytes == 1048576
+        assert settings.hmac_alg == TEST_HMAC_ALG
+        assert settings.log_level == TEST_LOG_LEVEL
+        assert settings.host == TEST_HOST
+        assert settings.port == TEST_PORT
+        assert settings.max_msg_size_bytes == TEST_MAX_MSG_SIZE
     finally:
         os.unlink(config_path)
 
 
 def test_load_config_missing_secret():
     config_data = {
-        'hmac_alg': 'SHA256',
-        'log_level': 'info',
-        'listen': '127.0.0.1:8080',
-        'max_msg_size_bytes': 1048576,
+        'hmac_alg': TEST_HMAC_ALG,
+        'log_level': TEST_LOG_LEVEL,
+        'listen': TEST_LISTEN,
+        'max_msg_size_bytes': TEST_MAX_MSG_SIZE,
     }
 
     with tempfile.NamedTemporaryFile(
@@ -58,11 +70,11 @@ def test_load_config_missing_secret():
 
 def test_load_config_invalid_secret():
     config_data = {
-        'hmac_alg': 'SHA256',
-        'secret': '!!!invalid-base64!!!',
-        'log_level': 'info',
-        'listen': '127.0.0.1:8080',
-        'max_msg_size_bytes': 1048576,
+        'hmac_alg': TEST_HMAC_ALG,
+        'secret': INVALID_SECRET,
+        'log_level': TEST_LOG_LEVEL,
+        'listen': TEST_LISTEN,
+        'max_msg_size_bytes': TEST_MAX_MSG_SIZE,
     }
 
     with tempfile.NamedTemporaryFile(
@@ -80,11 +92,11 @@ def test_load_config_invalid_secret():
 
 def test_load_config_invalid_log_level():
     config_data = {
-        'hmac_alg': 'SHA256',
-        'secret': 'dGVzdC1zZWNyZXQ=',
-        'log_level': 'invalid',
-        'listen': '127.0.0.1:8080',
-        'max_msg_size_bytes': 1048576,
+        'hmac_alg': TEST_HMAC_ALG,
+        'secret': TEST_SECRET,
+        'log_level': INVALID_LOG_LEVEL,
+        'listen': TEST_LISTEN,
+        'max_msg_size_bytes': TEST_MAX_MSG_SIZE,
     }
 
     with tempfile.NamedTemporaryFile(
@@ -101,6 +113,6 @@ def test_load_config_invalid_log_level():
 
 
 def test_settings_is_frozen():
-    settings = Settings(secret='dGVzdC1zZWNyZXQ=')
+    settings = Settings(secret=TEST_SECRET)
     with pytest.raises(Exception):
-        settings.max_msg_size_bytes = 100
+        settings.max_msg_size_bytes = NEW_MAX_MSG_SIZE
